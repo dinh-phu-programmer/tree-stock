@@ -9,10 +9,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.PriorityBlockingQueue;
@@ -24,14 +22,19 @@ public class ClientModelThread implements Runnable {
     private InputStream inputStream;
     private OutputStream outputStream;
 
+    private PriorityBlockingQueue<OrderSell> queueSell;
+    private PriorityBlockingQueue<OrderBuy> queueBuy;
+
     private String account;
     private String id;
 
     private boolean isSell;
 
-    public ClientModelThread(Socket client, ServerSocket server) {
+    public ClientModelThread(Socket client, ServerSocket server, PriorityBlockingQueue<OrderSell> queueSell, PriorityBlockingQueue<OrderBuy> queueBuy) {
         this.client = client;
         this.server = server;
+        this.queueBuy = queueBuy;
+        this.queueSell = queueSell;
     }
 
 
@@ -79,7 +82,7 @@ public class ClientModelThread implements Runnable {
                 accounts.add(queryAccount); // luu cac thang lay ra tu db
 
             }
-            System.out.println(accounts);
+//            System.out.println(accounts);
             int accAmount = accounts.size();
 
             int randomNumber = (int) (Math.random() * accAmount); // random
@@ -100,8 +103,10 @@ public class ClientModelThread implements Runnable {
                     buy(accounts.get(randomNumber));
                 }
                 maxOrder++;
+
                 Thread.sleep(200);
             }
+//            action(queueSell, queueBuy);
 
 
         } catch (SQLException e) {
@@ -139,16 +144,18 @@ public class ClientModelThread implements Runnable {
         Connection con = null;
 
         try {
+
             con = StockDatasource.getConnection();
-            OrderSell orderSell = (OrderSell) generateOrder(new OrderSell(), con, acc);
-            PriorityBlockingQueue<OrderSell> queueSell = ManageQueue.getQueueSell();
-            queueSell.add(orderSell);
+            OrderSell orderSell = (OrderSell) generateOrder(new OrderSell(), con, acc, "sell");
+            this.queueSell = ManageQueue.getQueueSell();
+            this.queueSell.add(orderSell);
             System.out.println("queue sell: " + queueSell);
         } catch (Exception e) {
-
+            e.printStackTrace();
         } finally {
             if (con != null) {
                 try {
+
                     con.close();
                 } catch (SQLException throwables) {
                     throwables.printStackTrace();
@@ -168,16 +175,17 @@ public class ClientModelThread implements Runnable {
 
         try {
             con = StockDatasource.getConnection();
-            OrderBuy orderBuy = (OrderBuy) generateOrder(new OrderBuy(), con, acc);
-            PriorityBlockingQueue<OrderBuy> queueBuy = ManageQueue.getQueueBuy();
-            queueBuy.add(orderBuy);
+            OrderBuy orderBuy = (OrderBuy) generateOrder(new OrderBuy(), con, acc, "buy");
+            this.queueBuy = ManageQueue.getQueueBuy();
+            this.queueBuy.add(orderBuy);
             System.out.println("queue buy: " + queueBuy);
 
         } catch (Exception e) {
-
+            e.printStackTrace();
         } finally {
             if (con != null) {
                 try {
+//                    con.commit();
                     con.close();
                 } catch (SQLException throwables) {
                     throwables.printStackTrace();
@@ -188,7 +196,7 @@ public class ClientModelThread implements Runnable {
 
     }
 
-    public Order generateOrder(Order order, Connection con, Account acc) throws SQLException {
+    public Order generateOrder(Order order, Connection con, Account acc, String action) throws SQLException {
         //query stock
         String queryStock = "select stock_id,auc_price,ce_price,fl_price from stock where 1=1";
 
@@ -224,6 +232,26 @@ public class ClientModelThread implements Runnable {
         order.setStock(sellStock);
         order.setPrice(randomMoney);
         order.setQty(randomQty);
+
+        //insert db
+//        con.setAutoCommit(false);
+//        String sql = null;
+//        if (acc.equals("buy")) {
+//            sql = "insert into trader_buy_order(acc_id,stock_id,time_create,trade_qty,trade_price) values(?,?,?,?,?)";
+//        } else {
+//            sql = "insert into trader_sell_order(acc_id,stock_id,time_create,trade_qty,trade_price) values(?,?,?,?,?)";
+//        }
+//        PreparedStatement preparedStmt = con.prepareStatement(sql);
+//        preparedStmt.setInt(1, 1992);
+//        preparedStmt.setString(2, "FPT");
+//        preparedStmt.setDate(3, Date.valueOf(LocalDate.now()));
+//        preparedStmt.setInt(4, 5000);
+//        preparedStmt.setInt(5, 5000);
+//        preparedStmt.execute();
+//        con.commit();
+
         return order;
     }
+
+
 }
