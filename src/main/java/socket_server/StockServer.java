@@ -32,7 +32,7 @@ public class StockServer implements Runnable {
             Socket client = server.accept();
             System.out.println("Connected!");
 
-            ClientModelThread clientThread = new ClientModelThread(client, server, ManageQueue.getQueueSell(), ManageQueue.getQueueBuy());
+            ClientModelThread clientThread = new ClientModelThread(client, server, Stock.getQueueSell(), Stock.getQueueBuy());
 
             es.execute(clientThread);
 
@@ -44,7 +44,7 @@ public class StockServer implements Runnable {
 
         StockServer server = new StockServer();
         es.execute(server);
-        Auction auction = new Auction(ManageQueue.getQueueSell(), ManageQueue.getQueueBuy());
+        Auction auction = new Auction(Stock.getQueueSell(), Stock.getQueueBuy());
         es.execute(auction);
     }
 

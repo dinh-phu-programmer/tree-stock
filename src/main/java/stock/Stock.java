@@ -1,11 +1,18 @@
 package stock;
 
-public class Stock implements Comparable<Stock> {
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.PriorityBlockingQueue;
+
+public class Stock {
     String stock;
     String comp;
     Double aucprice;
     Double ceprice;
     Double flprice;
+
+    private static Map<String, PriorityBlockingQueue<OrderSell>> queueSell = new HashMap<String, PriorityBlockingQueue<OrderSell>>();
+    private static Map<String, PriorityBlockingQueue<OrderBuy>> queueBuy = new HashMap<String, PriorityBlockingQueue<OrderBuy>>();
 
     public Stock(String stock) {
         this.stock = stock;
@@ -24,6 +31,18 @@ public class Stock implements Comparable<Stock> {
         this.aucprice = aucPrice;
         this.ceprice = cePrice;
         this.flprice = flPrice;
+    }
+
+    public static Map<String, PriorityBlockingQueue<OrderSell>> getQueueSell() {
+        return queueSell;
+    }
+
+    public static Map<String, PriorityBlockingQueue<OrderBuy>> getQueueBuy() {
+        return queueBuy;
+    }
+
+    public static void setQueueBuy(Map<String, PriorityBlockingQueue<OrderBuy>> queueBuy) {
+        Stock.queueBuy = queueBuy;
     }
 
     @Override
@@ -76,8 +95,5 @@ public class Stock implements Comparable<Stock> {
         this.flprice = flprice;
     }
 
-    @Override
-    public int compareTo(Stock o) {
-        return 0;
-    }
+
 }

@@ -10,17 +10,16 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.PriorityQueue;
+import java.util.*;
 import java.util.concurrent.PriorityBlockingQueue;
 
 public class Auction implements Runnable {
 
-    PriorityBlockingQueue<OrderSell> queueSell;
-    PriorityBlockingQueue<OrderBuy> queueBuy;
 
-    public Auction(PriorityBlockingQueue<OrderSell> queueSell, PriorityBlockingQueue<OrderBuy> queueBuy) {
+    Map<String, PriorityBlockingQueue<OrderSell>> queueSell = new HashMap<String, PriorityBlockingQueue<OrderSell>>();
+    Map<String, PriorityBlockingQueue<OrderBuy>> queueBuy = new HashMap<String, PriorityBlockingQueue<OrderBuy>>();
+
+    public Auction(Map<String, PriorityBlockingQueue<OrderSell>> queueSell, Map<String, PriorityBlockingQueue<OrderBuy>> queueBuy) {
         this.queueSell = queueSell;
         this.queueBuy = queueBuy;
     }
@@ -50,26 +49,15 @@ public class Auction implements Runnable {
 
             }
 
+//            for (Map.Entry<String, PriorityBlockingQueue<OrderSell>> entry : queueSell.entrySet()) {
+//                System.out.println(entry.getKey() + ":" + entry.getValue());
+//            }
+//
+//            for (Map.Entry<String, PriorityBlockingQueue<OrderBuy>> entry : queueBuy.entrySet()) {
+//                System.out.println(entry.getKey() + ":" + entry.getValue());
+//            }
 
-            ArrayList<OrderSell> sellStockList = new ArrayList<OrderSell>();
-            ArrayList<OrderBuy> buyStockList = new ArrayList<OrderBuy>();
-            for (Stock stock : stocks) {
 
-                for (OrderSell sell : queueSell) {
-                    if (sell.getStock().getStock().equals(stock.getStock())) {
-                        sellStockList.add(sell);
-                    }
-                }
-
-                for (OrderBuy buy : queueBuy) {
-                    if (buy.getStock().getStock().equals(stock.getStock())) {
-                        buyStockList.add(buy);
-                    }
-                }
-
-            }
-            System.out.println(sellStockList.size());
-            System.out.println(buyStockList.size());
 
         } catch (Exception e) {
 

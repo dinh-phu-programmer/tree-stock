@@ -12,7 +12,9 @@ import java.net.Socket;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.PriorityBlockingQueue;
 
 public class ClientModelThread implements Runnable {
@@ -22,15 +24,16 @@ public class ClientModelThread implements Runnable {
     private InputStream inputStream;
     private OutputStream outputStream;
 
-    private PriorityBlockingQueue<OrderSell> queueSell;
-    private PriorityBlockingQueue<OrderBuy> queueBuy;
+
+    private Map<String, PriorityBlockingQueue<OrderSell>> queueSell = new HashMap<String, PriorityBlockingQueue<OrderSell>>();
+    private Map<String, PriorityBlockingQueue<OrderBuy>> queueBuy = new HashMap<String, PriorityBlockingQueue<OrderBuy>>();
 
     private String account;
     private String id;
 
     private boolean isSell;
 
-    public ClientModelThread(Socket client, ServerSocket server, PriorityBlockingQueue<OrderSell> queueSell, PriorityBlockingQueue<OrderBuy> queueBuy) {
+    public ClientModelThread(Socket client, ServerSocket server, Map<String, PriorityBlockingQueue<OrderSell>> queueSell, Map<String, PriorityBlockingQueue<OrderBuy>> queueBuy) {
         this.client = client;
         this.server = server;
         this.queueBuy = queueBuy;
@@ -147,8 +150,17 @@ public class ClientModelThread implements Runnable {
 
             con = StockDatasource.getConnection();
             OrderSell orderSell = (OrderSell) generateOrder(new OrderSell(), con, acc, "sell");
-            this.queueSell = ManageQueue.getQueueSell();
-            this.queueSell.add(orderSell);
+
+            if (this.queueSell.get(orderSell.getStock().getStock()) != null) {
+                PriorityBlockingQueue<OrderSell> queue = this.queueSell.get(orderSell.getStock().getStock());
+                queue.add(orderSell);
+                this.queueSell.put(orderSell.getStock().getStock(), queue);
+            } else {
+                PriorityBlockingQueue<OrderSell> queue = new PriorityBlockingQueue<OrderSell>();
+                queue.add(orderSell);
+                this.queueSell.put(orderSell.getStock().getStock(), queue);
+            }
+
             System.out.println("queue sell: " + queueSell);
         } catch (Exception e) {
             e.printStackTrace();
@@ -176,8 +188,17 @@ public class ClientModelThread implements Runnable {
         try {
             con = StockDatasource.getConnection();
             OrderBuy orderBuy = (OrderBuy) generateOrder(new OrderBuy(), con, acc, "buy");
-            this.queueBuy = ManageQueue.getQueueBuy();
-            this.queueBuy.add(orderBuy);
+            if (this.queueBuy.get(orderBuy.getStock().getStock()) != null) {
+                PriorityBlockingQueue<OrderBuy> queue = this.queueBuy.get(orderBuy.getStock().getStock());
+                queue.add(orderBuy);
+                this.queueBuy.put(orderBuy.getStock().getStock(), queue);
+
+            } else {
+                PriorityBlockingQueue<OrderBuy> queue = new PriorityBlockingQueue<OrderBuy>();
+                queue.add(orderBuy);
+                this.queueBuy.put(orderBuy.getStock().getStock(), queue);
+            }
+
             System.out.println("queue buy: " + queueBuy);
 
         } catch (Exception e) {
